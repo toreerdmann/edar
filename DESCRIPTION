@@ -1,0 +1,12 @@
+Package: edar
+Title: Package for eyetracking data analysis
+Version: 0.0.0.9000
+Authors@R: 'Tore Erdmann <tore.erdmann@gmail.com> [aut, cre]'
+Description: This package provides functions for reading in eyetracking data
+    from .asc files and visualizing/analyzing them.
+Depends:
+    R (>= 3.3.2)
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 5.0.1
