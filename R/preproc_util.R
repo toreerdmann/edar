@@ -1,6 +1,7 @@
 ####################################
-### functions for removing blinks
-### and interpolation
+### functions for removing blinks,
+### interpolation,
+### and luminance extraction
 ####################################
 
 #' Interpolate blinks per trial
@@ -10,7 +11,7 @@
 #' interpolated linearly.
 #' @import data.table
 #' @export
-interpolate_blinks = function(obj, time_new, thin = 100) {
+interpolate_blinks = function(obj, time_new, thin = 100, verbose = FALSE) {
   if (! "edar_data" %in% class(obj))
     stop(sprintf("argument obj %s has to be an object of class 'edar_data'.", obj))
   ## maybe use obj$blink_dt for this?
@@ -19,7 +20,8 @@ interpolate_blinks = function(obj, time_new, thin = 100) {
       1:.N %% thin == 1][,
                          .( time_in_trial = time_new, 
                             x = {
-                              cat(sprintf("subj %s, trial %d\n", subject, trial))
+                              if (verbose)
+                                cat(sprintf("subj %s, trial %d\n", subject, trial))
                               idx <- ps != 0 & c(abs(diff(ps)) < 100, TRUE)
                               if (sum(!is.na(x[idx])) < .5 * length(x))
                                 NA_real_
@@ -177,7 +179,7 @@ flip = function(subdata) {
 #' Adding luminance information
 #' Extract and append luminance paths to the data.
 #' @param obj [edar_data] obj, created by load_data or read_ascii.
-#' @param files [list] of file-paths ordered by trial and 
+#' @param files [list] of vectors of file-paths ordered by trial and 
 #' with names corresponding to the subject IDs in 'obj'.
 #' @import data.table
 #' @importFrom EBImage resize readImage imageData medianFilter
@@ -186,13 +188,22 @@ add_luminance = function(obj, files, imgdir = NULL, resize_img = NULL,
                          smooth_img = FALSE, verbose = FALSE) {
   ntrials = obj$smooth[, length(unique(trial))] 
   subs = obj$smooth[, unique(subject)] 
-  if (length(files) == ntrials) {
-    files = setNames(lapply(seq_along(subs), function(i)
-      files), nm = subs)
+  if (! inherits(files, "data.frame")) {
+    files = dat$smooth[, .(image = files[trial]), by = .(subject, trial)]
   }
-  ## add image paths, to use in plotting functions later
-  obj$img = cbind(trial = 1:ntrials, do.call(cbind, files))
+  # ## add image paths, to use in plotting functions later
+  # if (is.null(imgdir)) {
+  #   obj$img = setkey(files, subject, trial)
+  # } else {
+  #   files2 = files
+  #   files2[, image := sapply(files$image, function(fi) grep_files(fi, imgdir))]
+  #   setkey(files2, subject, trial) 
+  #   obj$img = files2
+  # }
   
+  obj$img = setkey(basename(files), subject, trial)
+  
+  obj$smooth = merge(obj$smooth, files)
   obj$smooth[x > 0 & y > 0 &  
                x < obj$info$resolution$x & 
                y < obj$info$resolution$y, 
@@ -200,16 +211,17 @@ add_luminance = function(obj, files, imgdir = NULL, resize_img = NULL,
                if (verbose) {
                  if (trial == 1)
                    cat(sprintf("\n"))
-                 cat(sprintf("\rprocessing subject: %s, trial: %d", 
-                             subject, trial))
+                 cat(sprintf("\rprocessing subject: %s, trial: %d, image: %s\n", 
+                             subject, trial, image[1]))
                }
-               print(files[[subject]][trial])
                if (is.null(imgdir))
-                 filei = files[[subject]][trial]
+                 filei = image[1]
                else
-                 filei = grep_files(files[[subject]][trial], imgdir)
-               if (length(filei) != 1)
+                 filei = grep_files(image[1], imgdir)
+               if (length(filei) == 0)
                  stop("file not found.")
+               if (length(filei) > 1)
+                 stop(sprintf("multiple matches for file: %s.", image[1]))
                img = EBImage::readImage(filei)
                if (smooth_img > 0)
                  img = EBImage::medianFilter(img, smooth_img)

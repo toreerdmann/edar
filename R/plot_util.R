@@ -15,7 +15,7 @@ construct_screen = function(imgi, xmax_screen = 1024, ymax_screen = 768) {
 #' @import ggplot2
 #' @importFrom EBImage display
 #' @export
-plot_on_screen = function(subdat, rscreen, use_ggplot = FALSE) {
+plot_on_screen = function(subdat, rscreen, use_ggplot = TRUE) {
   xmax_screen = ncol(rscreen)
   ymax_screen = nrow(rscreen)
   if (use_ggplot)
@@ -26,7 +26,7 @@ plot_on_screen = function(subdat, rscreen, use_ggplot = FALSE) {
     geom_point() + 
     xlim(c(0, xmax_screen)) + ylim(c(0, ymax_screen))
   else
-    display(rotate(rscreen, -90), method = "raster")
+    EBImage::display(EBImage::rotate(rscreen, -90), method = "raster")
 }
 
 
