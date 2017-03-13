@@ -36,7 +36,7 @@ plot.edar_data = function(obj, what = c("gaze", "ps", "cen"), type = c("1", "2",
       geom_path(alpha = 1, size = .1)  +
       xli + yli + theme_classic()
     
-  } else if (what == "ps") {
+  } else if (what %in% c("ps", "cen")) {
     ## plot pupil size paths
     if (what == "cen")  
       subdat = obj$cen[eval(substitute(subs))]
