@@ -2,7 +2,7 @@
 #' @import data.table
 #' @import ggplot2
 #' @export plot.edar_data
-plot.edar_data = function(obj, what = c("gaze", "ps"), type = c("1", "2", "3", "4", "5"), 
+plot.edar_data = function(obj, what = c("gaze", "ps", "cen"), type = c("1", "2", "3", "4", "5"), 
                           subs = 1:.N, 
                           show_msgs = "", condition = NULL,
                           limit_screen = TRUE, raw = FALSE, ...) {
@@ -38,9 +38,11 @@ plot.edar_data = function(obj, what = c("gaze", "ps"), type = c("1", "2", "3", "
     
   } else if (what == "ps") {
     ## plot pupil size paths
-    if ("smooth" %in% names(obj) & raw == FALSE)
+    if (what == "cen")  
+      subdat = obj$cen[eval(substitute(subs))]
+    else if ("smooth" %in% names(obj) & raw == FALSE)
       subdat = obj$smooth[eval(substitute(subs))]
-    else
+    else  
       subdat = obj$raw[eval(substitute(subs))]
     
     #   casted_subdat = dcast(subdat, time_in_trial ~ subject + trial, value.var = "ps")
