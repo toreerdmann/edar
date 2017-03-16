@@ -189,7 +189,7 @@ add_luminance = function(obj, files, imgdir = NULL, resize_img = NULL,
   ntrials = obj$smooth[, length(unique(trial))] 
   subs = obj$smooth[, unique(subject)] 
   if (! inherits(files, "data.frame")) {
-    files = dat$smooth[, .(image = files[trial]), by = .(subject, trial)]
+    files = obj$smooth[, .(image = files[trial]), by = .(subject, trial)]
   }
   # ## add image paths, to use in plotting functions later
   # if (is.null(imgdir)) {
@@ -201,9 +201,9 @@ add_luminance = function(obj, files, imgdir = NULL, resize_img = NULL,
   #   obj$img = files2
   # }
   
-  obj$img = setkey(basename(files), subject, trial)
+  ## obj$img = setkey(basename(files), subject, trial)
   
-  obj$smooth = merge(obj$smooth, files)
+  obj$smooth = merge(obj$smooth, files, all.x = TRUE, by = c("subject", "trial"))
   obj$smooth[x > 0 & y > 0 &  
                x < obj$info$resolution$x & 
                y < obj$info$resolution$y, 
@@ -226,15 +226,17 @@ add_luminance = function(obj, files, imgdir = NULL, resize_img = NULL,
                if (smooth_img > 0)
                  img = EBImage::medianFilter(img, smooth_img)
                img = EBImage::imageData(img)
-               if (length(dim(img)) == 3)
-                 img = img[,,1]
-               # imgi = EBImage::imageData(images[[subject]][trial])[,,1]
+               if (length(dim(img)) == 3) {
+                 img = img[,,1] + img[,,2] + img[,,3]
+                 img = img / max(img)
+               }
+               cat(sprintf("bla"))
                if (! is.null(resize_img))
                  img = t(as.matrix(EBImage::resize(img, h = resize_img)))
                else
                  img = t(as.matrix(img))
                rscreen = construct_screen(img, obj$info$resolution$x, obj$info$resolution$y)
-               rscreen[cbind(round(y), round(x))]
+               rscreen[cbind(floor(y), floor(x))]
              }, by = .(subject, trial)]
   obj
 }
