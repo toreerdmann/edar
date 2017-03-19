@@ -199,6 +199,7 @@ add_luminance = function(obj, files, imgdir = NULL, resize_img = NULL,
   }
     
   obj$smooth = merge(obj$smooth, files[, .(subject, trial, image  = basename(image))], by = c("subject", "trial"))
+
   obj$smooth[x > 0 & y > 0 &  
                x < obj$info$resolution$x & 
                y < obj$info$resolution$y, 
@@ -221,9 +222,11 @@ add_luminance = function(obj, files, imgdir = NULL, resize_img = NULL,
                if (smooth_img > 0)
                  img = EBImage::medianFilter(img, smooth_img)
                img = EBImage::imageData(img)
-               if (length(dim(img)) == 3)
-                 img = img[,,1]
-               # imgi = EBImage::imageData(images[[subject]][trial])[,,1]
+               if (length(dim(img)) == 3) {
+                 img = img[,,1] + img[,,2] + img[,,3]
+                 img = img / max(img)
+               }
+               cat(sprintf("bla"))
                if (! is.null(resize_img))
                  img = t(as.matrix(EBImage::resize(img, h = resize_img)))
                else

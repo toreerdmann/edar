@@ -5,7 +5,7 @@ Authors@R: 'Tore Erdmann <tore.erdmann@gmail.com> [aut, cre]'
 Description: This package provides functions for reading in eyetracking data
     from .asc files and visualizing/analyzing them.
 Depends:
-    R (>= 3.3.2)
+    R (>= 3.2.2)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
