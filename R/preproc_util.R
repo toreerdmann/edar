@@ -44,6 +44,9 @@ interpolate_blinks = function(obj, time_new, thin = 100, verbose = FALSE) {
                               else 
                                 approx(time_in_trial[idx], ps[idx], xout = time_new)$y
                             }), by = .(subject, trial)]
+  ## add time to interpolated data, for correcting slow drift later 
+  obj$smooth = merge(obj$smooth, obj$raw[, .(subject, trial, time_in_trial, time)], 
+                     by = c("subject", "trial", "time_in_trial"))
   obj
 }
 
