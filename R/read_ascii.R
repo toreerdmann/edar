@@ -3,7 +3,7 @@
 #' @param file path to a .asc file
 #' @import data.table
 #' @export
-read_ascii2 = function(file) {
+read_ascii = function(file) {
     dat = readLines(file)
     id_lines_star = grep("^[*]{2}", dat)
     id_lines_input = grep("^[INPUT]", dat)
