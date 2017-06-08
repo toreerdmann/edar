@@ -12,18 +12,12 @@ read_ascii = function(path_ascii) {
     ## n = length(dat)
     ## dat = dat[-((n-100):n)]
     ## for now, I'll assume that every file has exactly 7 occurences of INPUT
-    stopifnot(length(id_lines_input) %in% 6:7)
+    stopifnot(length(id_lines_input) %in% 6:8)
     ## not true generally...
 
     ## seperate header and data
-    if (length(id_lines_input) == 6) {
-        header = dat[1:id_lines_input[5]]
-        dat = dat[(id_lines_input[5]+1):(id_lines_input[6]-1)]
-    }
-    if (length(id_lines_input) == 7) {
-        header = dat[1:id_lines_input[6]]
-        dat = dat[(id_lines_input[6]+1):(id_lines_input[7]-1)]
-    }
+    header = dat[1:id_lines_input[length(id_lines_input) - 1]]
+    dat = dat[(id_lines_input[length(id_lines_input) - 1]+1):(id_lines_input[length(id_lines_input)]-1)]
 
     ## parse events
     events = dat[grep("^[0-9]+", dat, invert = TRUE)]
