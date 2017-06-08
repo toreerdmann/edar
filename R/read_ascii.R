@@ -1,18 +1,29 @@
 #' Read and parse an ascii (.asc) file.
 #'
-#' @param file path to a .asc file
+#' @param path_ascii path to a .asc file
 #' @import data.table
 #' @export
-read_ascii = function(file) {
-    dat = readLines(file)
+read_ascii = function(path_ascii) {
+    dat = readLines(path_ascii)
     id_lines_star = grep("^[*]{2}", dat)
     id_lines_input = grep("^[INPUT]", dat)
+
+    ## remove last few lines (becuase of invalid file end)
+    ## n = length(dat)
+    ## dat = dat[-((n-100):n)]
     ## for now, I'll assume that every file has exactly 7 occurences of INPUT
-    stopifnot(length(id_lines_input) == 7)
+    stopifnot(length(id_lines_input) %in% 6:7)
+    ## not true generally...
 
     ## seperate header and data
-    header = dat[1:id_lines_input[6]]
-    dat = dat[(id_lines_input[6]+1):(id_lines_input[7]-1)]
+    if (length(id_lines_input) == 6) {
+        header = dat[1:id_lines_input[5]]
+        dat = dat[(id_lines_input[5]+1):(id_lines_input[6]-1)]
+    }
+    if (length(id_lines_input) == 7) {
+        header = dat[1:id_lines_input[6]]
+        dat = dat[(id_lines_input[6]+1):(id_lines_input[7]-1)]
+    }
 
     ## parse events
     events = dat[grep("^[0-9]+", dat, invert = TRUE)]
@@ -20,17 +31,18 @@ read_ascii = function(file) {
     dat = dat[grep("^[0-9]+", dat)]
 
     ## read in raw data
-    raw = data.table::fread(paste(dat, collapse = "\n"),
-                            select = 1:4,
-                            colClasses = list(integer = 1, numeric = 2:4),
-                            na.strings = ".",
-                            stringsAsFactors = FALSE,
-                            col.names = c("time", "x", "y", "ps"),
-                            nrows = length(dat))
+    rawdat = data.table::fread(paste(dat, collapse = "\n"),
+                               select = 1:4,
+                               colClasses = list(integer = 1, numeric = 2:4),
+                               na.strings = ".",
+                               stringsAsFactors = FALSE,
+                               col.names = c("time", "x", "y", "ps"),
+                               nrows = length(dat))
 
     ## for now, assume that all rows have one millisecond
     ## ... or at least: are the same
-    stopifnot(length(unique(diff(dt$time))) == 1)
+    if (! length(unique(diff(rawdat$time))) == 1)
+        warning("Jump in raw time vector.")
 
     ##=========================
     ## sort out events
@@ -44,7 +56,7 @@ read_ascii = function(file) {
     msg[, text := gsub("^([0-9]+ )(.*)", "\\2", text)]
     fix = data.table::fread(paste(events[grep("^EFIX", events)], collapse = "\n"),
                             select = 1:6,
-                            colClasses = list(integer = 1:3, numeric = 3:6),
+                            colClasses = list(integer = 1:3, numeric = 4:6),
                             stringsAsFactors = FALSE,
                             col.names = c("t1", "t2", "dur", "x", "y", "ps"))
     fix[, t1 := as.numeric(gsub("^.* ([0-9]+)$", "\\1", t1))]
@@ -76,7 +88,7 @@ read_ascii = function(file) {
     ##=========================
     ## return
     ##=========================
-    obj = list(raw = raw, msg = msg, fix = fix, sacc = sacc, blink = blink, header = header)
+    obj = list(raw = rawdat, msg = msg, fix = fix, sacc = sacc, blink = blink, header = header)
     class(obj) = c(class(obj), "edar_data")
     obj
 }
@@ -92,20 +104,27 @@ read_ascii = function(file) {
 #' `trial_end` can also be [numeric] and indicating the length trials.
 #' @import data.table
 #' @export
-slice_into_trials = function(obj, trial_seperators) {
+slice_into_trials = function(obj, trial_seperators, number_trials = NULL) {
     stopifnot(inherits(obj, "edar_data"))
 
     if (is.null(number_trials)) {
         ## try to infer number of trials
-        if (trial_seperators$grep) {
+        if (! is.null(trial_seperators$grep) && trial_seperators$grep == TRUE) {
             number_trials <- length(obj$msg[grep(trial_seperators$trial_start, text), text])
         } else {
             number_trials <- length(obj$msg[, text[text %in% trial_seperators$trial_start]])
         }
     }
+
+    if (! all(trial_seperators$trial_start %in% obj$msg[, text])) {
+        found = trial_seperators$trial_start %in% obj$msg[, text]
+        warning(sprintf("Could only find the following messages provided in 'trial_seperators$trial_start': \n%s\nMessages not found: \n%s\n",
+                        paste(trial_seperators$trial_start[found], collapse = ", "),
+                        paste(trial_seperators$trial_start[!found], collapse = ", ")))
+    }
     
     ## starting times of all trials
-    if (trial_seperators$grep == TRUE) {
+    if (!is.null(trial_seperators$grep) && trial_seperators$grep == TRUE) {
         tstart_vec <- obj$msg[grep(trial_seperators$trial_start, text), time]
     } else {
         tstart_vec <- obj$msg[, time[text %in% trial_seperators$trial_start]]
@@ -113,7 +132,7 @@ slice_into_trials = function(obj, trial_seperators) {
     
     if (length(tstart_vec) == 0)
         stop(c("'trial_start' messages not found. Please make sure to input messages",
-               " just as they are in the raw .asc file."))
+               " identical to those in the raw .asc file."))
     
     ## trial_end is a vector of numbers, use these as the length
     ## if they are character, regard them as messages
@@ -123,7 +142,7 @@ slice_into_trials = function(obj, trial_seperators) {
             stop("trial_seperators$trial_end has to have length 1 or equal to number of trials.")
         tend_vec <- tstart_vec + trial_seperators$trial_end
     } else {
-        if (trial_seperators$grep == TRUE) {
+        if (!is.null(trial_seperators$grep) && trial_seperators$grep == TRUE) {
             tend_vec <- obj$msg[grep(trial_seperators$trial_end, text), time]
         } else {
             tend_vec <- obj$msg[, time[text %in% trial_seperators$trial_end]]
@@ -136,7 +155,7 @@ slice_into_trials = function(obj, trial_seperators) {
             tend <- tend_vec[i]
             ## at last trial, let everyting til the end be in that trial
             if (is.na(tend))
-                tend <- tstart + rval$raw[ , max(time, na.rm = TRUE)]
+                tend <- tstart + obj$raw[ , max(time, na.rm = TRUE)]
             ## add trial index and time_in_trial: relative to start of current trial
             obj$raw[ time >= tstart & time < tend,
                     `:=`(trial = i,
@@ -155,10 +174,10 @@ slice_into_trials = function(obj, trial_seperators) {
                            time_in_trial = t1 - tstart)]
         })
     
-    ## format(object.size(rval), units = "auto")
+    ## format(object.size(obj), units = "auto")
     obj$raw_notrial = obj$raw[is.na(trial)]
     obj$raw = obj$raw[!is.na(trial)]
     ## ## set class
-    ## class(obj) = c(class(rval), "edar_data")
+    ## class(obj) = c(class(obj), "edar_data")
     obj
 }
