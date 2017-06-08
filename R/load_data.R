@@ -59,9 +59,7 @@ load_data <- function(datadir, savedir = "", prefix = "", trial_seperators = NUL
         asc$sacc[ , subject := id_i]
         asc$blink[ , subject := id_i]
       } else {
-        # asc <- read.asc(files[i])
         asc <- read_ascii(path_ascii = files[i])
-        # asc <- read_ascii(path_ascii = files[i], ...)
         
         ## slice into trials
         if (! is.null(trial_seperators))
