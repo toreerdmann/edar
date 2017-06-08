@@ -82,7 +82,11 @@ plot.edar_data = function(obj, what = c("gaze", "ps", "cen"), type = c("1", "2",
                   ## pointwise mean functions +- standard deviation
                   ggplot(subdat, aes(time_in_trial, ps, col = factor(subject))) +
                   aes_string(linetype = condition) + 
-                  stat_summary(fun.data = "mean_cl_boot"))
+                  stat_summary(fun.data = "mean_cl_boot"),
+                "6" = 
+                  ggplot(subdat, aes(time_in_trial, ps,)) +
+                  aes_string(linetype = condition) + 
+                  stat_summary(fun.y = "mean", geom = "line"))
   }
   print(g)
   g

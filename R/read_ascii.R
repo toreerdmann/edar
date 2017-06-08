@@ -6,6 +6,7 @@
 #' per trial. For example, the whole time series of the experiment is cut between the first entries of 
 #' `trial_start` and `trial_end` to obtain the first trial.
 #' `trial_end` can also be [numeric] and indicating the length trials.
+#' @import data.table
 #' @export
 read_ascii <- function(path_ascii, save_rdata = "", number_trials = NULL,
                        trial_seperators = NULL, ...) {
