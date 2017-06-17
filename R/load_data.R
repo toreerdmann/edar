@@ -41,7 +41,7 @@ load_data <- function(datadir, savedir = "", prefix = "", trial_seperators = NUL
     ## get questions and images
     images <- get_images(datadir)
   }
-  
+ 
   ## load and sort out all files
   system.time(
     datalist <- parallel::mclapply(seq_along(files), function(i) {
@@ -53,7 +53,8 @@ load_data <- function(datadir, savedir = "", prefix = "", trial_seperators = NUL
                           trial_seperators = trial_seperators)
         ## add subject indicators
         asc$raw[ , subject := id_i]
-        asc$raw_notrial[ , subject := NULL]
+        if (!is.null(asc$raw_notrial))
+            asc$raw_notrial[ , subject := NULL]
         asc$msg[ , subject := id_i]
         asc$fix[ , subject := id_i]
         asc$sacc[ , subject := id_i]
@@ -67,7 +68,8 @@ load_data <- function(datadir, savedir = "", prefix = "", trial_seperators = NUL
         
         ## add subject indicators
         asc$raw[ , subject := id_i]
-        asc$raw_notrial[ , subject := id_i]
+        if (!is.null(asc$raw_notrial))
+            asc$raw_notrial[ , subject := id_i]
         asc$msg[ , subject := id_i]
         asc$fix[ , subject := id_i]
         asc$sacc[ , subject := id_i]

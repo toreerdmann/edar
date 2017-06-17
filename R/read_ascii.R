@@ -16,14 +16,8 @@ read_ascii = function(path_ascii) {
     ## not true generally...
 
     ## seperate header and data
-    ## if (length(id_lines_input) == 6) {
     header = dat[1:id_lines_input[length(id_lines_input) - 1]]
     dat = dat[(id_lines_input[length(id_lines_input) - 1]+1):(id_lines_input[length(id_lines_input)]-1)]
-
-    ## if (length(id_lines_input) == 7) {
-    ##     header = dat[1:id_lines_input[6]]
-    ##     dat = dat[(id_lines_input[6]+1):(id_lines_input[7]-1)]
-    ## }
 
     ## parse events
     events = dat[grep("^[0-9]+", dat, invert = TRUE)]
