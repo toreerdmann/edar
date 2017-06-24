@@ -237,26 +237,37 @@ add_luminance = function(obj, files, imgdir = NULL, resize_img = NULL,
 
 #' @import data.table
 #' @export
-get_designmats = function(obj, ntimepoints = NULL) {
+cast_data = function(obj, ntimepoints = NULL) {
     stopifnot(inherits(obj, "edar_data"))
     subs = unique(obj$smooth$subject)
     if (is.null(ntimepoints))
-        ntimepoints = obj$cen[trial == 1, length(unique(time_in_trial))]
+        ntimepoints = obj$smooth[trial == 1, length(unique(time_in_trial))]
     psmat = do.call(rbind, lapply(subs, function(subji)
-        t((dcast(obj$smooth[.(subji)], 
-                 time_in_trial ~ trial, 
-                 value.var = "ps")[,-1,with=F])[-ntimepoints])))
+        t((dcast(obj$smooth[.(subji)], time_in_trial ~ trial, 
+                 value.var = "ps"))[,-1,with=FALSE])))
     xmat = do.call(rbind, lapply(subs, function(subji)
         t(as.matrix(dcast(obj$smooth[.(subji)], 
                           time_in_trial ~ trial, 
-                          value.var = "x")[,-1,with=F])[-ntimepoints,])))
+                          value.var = "x")[,-1,with=F]))))
     ymat = do.call(rbind, lapply(subs, function(subji)
         t(as.matrix(dcast(obj$smooth[.(subji)], 
                           time_in_trial ~ trial, 
-                          value.var = "y")[,-1,with=F])[-ntimepoints,])))
+                          value.var = "y")[,-1,with=F]))))
     lumimat = do.call(rbind, lapply(subs, function(subji)
         t(as.matrix(dcast(obj$smooth[.(subji)], 
                           time_in_trial ~ trial, 
-                          value.var = "lumi")[,-1,with=F])[-ntimepoints,])))
-    list(ps = psmat, x = xmat, y = ymat, lumi = lumimat)
+                          value.var = "luminance")[,-1,with=F]))))
+    vars = names(obj$smooth)[! names(obj$smooth) %in% c("subject", "trial", "time", "time_in_trial", "x", "y" ,"ps", "ps_z", "luminance")]
+    obj$smooth[, ]
+    form = as.formula(paste0("subject + trial + ", paste(vars, collapse = " + "), " ~ time_in_trial"))
+    casted = dcast(dat$smooth, form, value.var = "ps")
+    casted = casted[, 1:(2 + length(vars)), with = FALSE]
+    casted[, subject := factor(subject)]
+    designmat = append(list(pupilsize = I(psmat),
+                     x = I(xmat),
+                     y = I(ymat),
+                     luminance = I(lumimat),
+                     t = obj$smooth[, sort(unique(time_in_trial))]),
+                     as.list(casted))
+    designmat
 }
