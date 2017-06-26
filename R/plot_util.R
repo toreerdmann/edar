@@ -11,23 +11,23 @@ construct_screen = function(imgi, xmax_screen = 1024, ymax_screen = 768) {
                   matrix(0, nrow = border_y, ncol = xmax_screen))
   rscreen
 }
-## plot data over background screen function
-#' @import ggplot2
-#' @importFrom EBImage display
-#' @export
-plot_on_screen = function(subdat, rscreen, use_ggplot = TRUE) {
-  xmax_screen = ncol(rscreen)
-  ymax_screen = nrow(rscreen)
-  if (use_ggplot)
-    ggplot(subdat, aes(x, y)) +
-    geom_rect(xmin = 0, xmax = xmax_screen,
-              ymin = 0, ymax = ymax_screen, fill = "white") + 
-    annotation_raster(rscreen, 0, xmax_screen, 0, ymax_screen) + 
-    geom_point() + 
-    xlim(c(0, xmax_screen)) + ylim(c(0, ymax_screen))
-  else
-    EBImage::display(EBImage::rotate(rscreen, -90), method = "raster")
-}
+## ## plot data over background screen function
+## #' @import ggplot2
+## #' @importFrom EBImage display
+## #' @export
+## plot_on_screen = function(subdat, rscreen, use_ggplot = TRUE) {
+##   xmax_screen = ncol(rscreen)
+##   ymax_screen = nrow(rscreen)
+##   if (use_ggplot)
+##     ggplot(subdat, aes(x, y)) +
+##     geom_rect(xmin = 0, xmax = xmax_screen,
+##               ymin = 0, ymax = ymax_screen, fill = "white") + 
+##     annotation_raster(rscreen, 0, xmax_screen, 0, ymax_screen) + 
+##     geom_point() + 
+##     xlim(c(0, xmax_screen)) + ylim(c(0, ymax_screen))
+##   else
+##     EBImage::display(EBImage::rotate(rscreen, -90), method = "raster")
+## }
 
 
 #' Function for transforming a point cloud.

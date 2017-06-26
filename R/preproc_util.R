@@ -174,66 +174,66 @@ flip = function(subdata) {
     rval
 }
 
-#' Adding luminance information
-#' Extract and append luminance paths to the data.
-#' @param obj [edar_data] obj, created by load_data or read_ascii.
-#' @param files [list] of vectors of file-paths ordered by trial and 
-#' with names corresponding to the subject IDs in 'obj'.
-#' @import data.table
-#' @importFrom EBImage resize readImage imageData medianFilter
-#' @export
-add_luminance = function(obj, files, imgdir = NULL, resize_img = NULL, 
-                         smooth_img = FALSE, verbose = FALSE) {
-    ntrials = obj$smooth[, length(unique(trial))] 
-    subs = obj$smooth[, unique(subject)] 
-    if (! inherits(files, "data.frame")) {
-        files = obj$smooth[, .(image = files[trial]), by = .(subject, trial)]
-        obj$img = files
-    } else {
-        files2 = files
-        files2[ , image := basename(image)]
-        setkey(files2, subject, trial)
-        obj$img = files2
-    }
+## #' Adding luminance information
+## #' Extract and append luminance paths to the data.
+## #' @param obj [edar_data] obj, created by load_data or read_ascii.
+## #' @param files [list] of vectors of file-paths ordered by trial and 
+## #' with names corresponding to the subject IDs in 'obj'.
+## #' @import data.table
+## #' @importFrom EBImage resize readImage imageData medianFilter
+## #' @export
+## add_luminance = function(obj, files, imgdir = NULL, resize_img = NULL, 
+##                          smooth_img = FALSE, verbose = FALSE) {
+##     ntrials = obj$smooth[, length(unique(trial))] 
+##     subs = obj$smooth[, unique(subject)] 
+##     if (! inherits(files, "data.frame")) {
+##         files = obj$smooth[, .(image = files[trial]), by = .(subject, trial)]
+##         obj$img = files
+##     } else {
+##         files2 = files
+##         files2[ , image := basename(image)]
+##         setkey(files2, subject, trial)
+##         obj$img = files2
+##     }
     
-    obj$smooth = merge(obj$smooth, files[, .(subject, trial, image  = basename(image))], by = c("subject", "trial"))
+##     obj$smooth = merge(obj$smooth, files[, .(subject, trial, image  = basename(image))], by = c("subject", "trial"))
 
-    obj$smooth[x > 0 & y > 0 &  
-               x < obj$info$resolution$x & 
-               y < obj$info$resolution$y, 
-               lumi := {
-                   if (verbose) {
-                       if (trial == 1)
-                           cat(sprintf("\n"))
-                       cat(sprintf("\rprocessing subject: %s, trial: %d, image: %s\n", 
-                                   subject, trial, image[1]))
-                   }
-                   if (is.null(imgdir))
-                       filei = image[1]
-                   else
-                       filei = grep_files(image[1], imgdir)
-                   if (length(filei) == 0)
-                       stop("file not found.")
-                   if (length(filei) > 1)
-                       stop(sprintf("multiple matches for file: %s.", image[1]))
-                   img = EBImage::readImage(filei)
-                   if (smooth_img > 0)
-                       img = EBImage::medianFilter(img, smooth_img)
-                   img = EBImage::imageData(img)
-                   if (length(dim(img)) == 3) {
-                       img = img[,,1] + img[,,2] + img[,,3]
-                       img = img / max(img)
-                   }
-                   cat(sprintf("bla"))
-                   if (! is.null(resize_img))
-                       img = t(as.matrix(EBImage::resize(img, h = resize_img)))
-                   else
-                       img = t(as.matrix(img))
-                   rscreen = construct_screen(img, obj$info$resolution$x, obj$info$resolution$y)
-                   rscreen[cbind(floor(y), floor(x))]
-               }, by = .(subject, trial)]
-    obj
-}
+##     obj$smooth[x > 0 & y > 0 &  
+##                x < obj$info$resolution$x & 
+##                y < obj$info$resolution$y, 
+##                lumi := {
+##                    if (verbose) {
+##                        if (trial == 1)
+##                            cat(sprintf("\n"))
+##                        cat(sprintf("\rprocessing subject: %s, trial: %d, image: %s\n", 
+##                                    subject, trial, image[1]))
+##                    }
+##                    if (is.null(imgdir))
+##                        filei = image[1]
+##                    else
+##                        filei = grep_files(image[1], imgdir)
+##                    if (length(filei) == 0)
+##                        stop("file not found.")
+##                    if (length(filei) > 1)
+##                        stop(sprintf("multiple matches for file: %s.", image[1]))
+##                    img = EBImage::readImage(filei)
+##                    if (smooth_img > 0)
+##                        img = EBImage::medianFilter(img, smooth_img)
+##                    img = EBImage::imageData(img)
+##                    if (length(dim(img)) == 3) {
+##                        img = img[,,1] + img[,,2] + img[,,3]
+##                        img = img / max(img)
+##                    }
+##                    cat(sprintf("bla"))
+##                    if (! is.null(resize_img))
+##                        img = t(as.matrix(EBImage::resize(img, h = resize_img)))
+##                    else
+##                        img = t(as.matrix(img))
+##                    rscreen = construct_screen(img, obj$info$resolution$x, obj$info$resolution$y)
+##                    rscreen[cbind(floor(y), floor(x))]
+##                }, by = .(subject, trial)]
+##     obj
+## }
 
 #' @import data.table
 #' @export
