@@ -2,6 +2,7 @@
 #' 
 #' @import refund
 #' @importFrom purrr map_at
+#' @export
 bootstrap_pffr = function(formula, data, t, nboot = 40, ncpus = 1, seed = NULL) {
   stopifnot(c("subject", "trial") %in% names(data))
   stopifnot(is.factor(data$subject))
@@ -16,6 +17,7 @@ bootstrap_pffr = function(formula, data, t, nboot = 40, ncpus = 1, seed = NULL) 
       sample(data$trial[data$subject == subji], size = ntrials, TRUE) 
   }), nm = levels(data$subject)), FALSE)
   
+  msg("starting sampling ...")
   boot_out = parallel::mclapply(1:nboot, function(rep) {
     ## take bootstrap sample
     ## sample same number of trials for each person
@@ -30,16 +32,17 @@ bootstrap_pffr = function(formula, data, t, nboot = 40, ncpus = 1, seed = NULL) 
         }))
       }
     })
-    
+      
     ## convert to factor again
     data_boot = purrr::map_at(data_boot, which(sapply(data, is.factor)), ~ factor(.x))
     
     ## fit model
     ## fit1 = pffr(formula = formula, yind=t, data=data_boot)
     fit1 = pffr(formula = formula, data=data_boot)
-    suppressMessages(c1 <- coef(fit1))
+    suppressMessages(c1 <- coef(fit1, seWithMean = TRUE))
     list(pterms = c1$pterms, smterms = BBmisc::extractSubList(c1$smterms, "coef"))
   }, mc.cores = ncpus)
+  msg("done sampling ...")
   
   ## names(boot_out[[1]][[2]])
   ## boot_out[[1]][[2]][[1]]
@@ -59,6 +62,7 @@ bootstrap_pffr = function(formula, data, t, nboot = 40, ncpus = 1, seed = NULL) 
   rval
 }
 
+#' @export
 print.pffr_boot = function(obj) {
   cat("Bootstrap results \n")
   cat("Formula: ", paste(obj$formula), "\n")
@@ -67,6 +71,7 @@ print.pffr_boot = function(obj) {
   print(str(obj,0))
 }
 
+#' @export
 plot.pffr_boot = function(obj) {
   neffects = length(obj[["smeffects"]])
   
@@ -83,4 +88,8 @@ plot.pffr_boot = function(obj) {
     matplot(obj[["smeffects"]][[i]], type = "l", ylab = names(obj$smeffects)[i])
   
   invisible(NULL)
+}
+
+msg = function(text) {
+    message(sprintf("%s | %s", format(Sys.time(), "%d.%b.%Y %X"), text))
 }

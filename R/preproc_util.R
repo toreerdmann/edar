@@ -258,8 +258,10 @@ cast_data = function(obj, ntimepoints = NULL) {
                           time_in_trial ~ trial, 
                           value.var = "luminance")[,-1,with=F]))))
     vars = names(obj$smooth)[! names(obj$smooth) %in% c("subject", "trial", "time", "time_in_trial", "x", "y" ,"ps", "ps_z", "luminance")]
-    obj$smooth[, ]
-    form = as.formula(paste0("subject + trial + ", paste(vars, collapse = " + "), " ~ time_in_trial"))
+    if (length(vars) > 0)
+        form = as.formula(paste0("subject + trial + ", paste(vars, collapse = " + "), " ~ time_in_trial"))
+    else
+        form = as.formula(paste0("subject + trial", " ~ time_in_trial"))
     casted = dcast(dat$smooth, form, value.var = "ps")
     casted = casted[, 1:(2 + length(vars)), with = FALSE]
     casted[, subject := factor(subject)]
