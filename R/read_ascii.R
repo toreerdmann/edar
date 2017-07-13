@@ -5,19 +5,41 @@
 #' @export
 read_ascii = function(path_ascii) {
     dat = readLines(path_ascii)
-    id_lines_star = grep("^[*]{2}", dat)
-    id_lines_input = grep("^[INPUT]", dat)
+    ## id_lines_star = grep("^[*]{2}", dat)
+    ## id_lines_input = grep("^[INPUT]", dat)
+    id_lines_start = grep("^START", dat)
+    id_lines_end = grep("^END", dat)
 
     ## remove last few lines (becuase of invalid file end)
     ## n = length(dat)
     ## dat = dat[-((n-100):n)]
     ## for now, I'll assume that every file has exactly 7 occurences of INPUT
-    stopifnot(length(id_lines_input) %in% 6:8)
+    ## stopifnot(length(id_lines_input) %in% 6:8)
     ## not true generally...
 
+    ## for our experiments, if there is just one occurrence of START and END,
+    ## thats delineating the whole experiment.
+    ## otherwise its delineating the trials
+    stopifnot(length(id_lines_start) > 0 && length(id_lines_end) > 0)
+    if (length(id_lines_start) == 1 & length(id_lines_end) == 1) {
+        ## seperate header and data
+        header = dat[1:id_lines_start[1]]
+        dat = dat[(id_lines_start[1]+2):(id_lines_end-2)]
+    } else if (length(id_lines_start) > 1 & length(id_lines_end) > 1) {
+        if (length(id_lines_start) != length(id_lines_end))
+            stop(sprintf("Unequal number of START and END messages in .asc file.\nSTART: %d, END: %d",
+                         length(id_lines_start), length(id_lines_end)))
+        stop("Not implemented yet.")
+
+    } else {
+        stop(sprintf("Unexpected number of START and END messages in .asc file.\nSTART: %d, END: %d",
+                     length(id_lines_start), length(id_lines_end)))
+    }
+    
+    ## old:
     ## seperate header and data
-    header = dat[1:id_lines_input[length(id_lines_input) - 1]]
-    dat = dat[(id_lines_input[length(id_lines_input) - 1]+1):(id_lines_input[length(id_lines_input)]-1)]
+    ## header = dat[1:id_lines_input[length(id_lines_input) - 1]]
+    ## dat = dat[(id_lines_input[length(id_lines_input) - 1]+1):(id_lines_input[length(id_lines_input)]-1)]
 
     ## parse events
     events = dat[grep("^[0-9]+", dat, invert = TRUE)]
