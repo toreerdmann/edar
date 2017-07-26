@@ -168,3 +168,17 @@ qp = function(subdat, ...) {
 ## plot(obj[subject %in% 1:2, .(x,y)], col = obj$subject, type = "b")
 ## plot(obj[subject %in% 1:2, .(x,y)], col = 1:2, type = "b")
 ## plot(obj[subject %in% 1:2, .(x,y)], col = 1:2, type = "l")
+
+
+#' Plot subdat on image.
+#'
+#' @param subdat [data.table] with components x and y.
+#' @param imgi   [cimg] image to use as background.
+#' @import data.table
+#' @import imager
+#' @export
+plot_gaze = function(subdat, imgi, ...) {
+    imp = implot(imager::mirror(imgi, "y"),
+                 subdat[, plot(x, y, ...)])
+    plot(mirror(imp, "y"))
+}

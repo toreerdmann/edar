@@ -273,3 +273,22 @@ cast_data = function(obj, ntimepoints = NULL) {
                      as.list(casted))
     designmat
 }
+
+#' Apply expression to all elements of an edar_data object.
+#'
+#' @export
+#' @examples
+#' # remove _T.asc part from subject names
+#' apply_edardata(dat, subject := gsub("_T.asc$", "", subject))
+apply_edardata = function(obj, expr) {
+    dat$raw[, eval(substitute(expr))]
+    dat$fix[, eval(substitute(expr))]
+    dat$sacc[, eval(substitute(expr))]
+    dat$blink[, eval(substitute(expr))]
+    if (!is.null(dat$smooth))
+        dat$smooth[, eval(substitute(expr))]
+}
+## expr = quote(subject := gsub("_T.asc$", "", subject))
+## dat$raw
+## apply_edardata(dat, subject := gsub("_T.asc$", "", subject))
+## dat$raw
